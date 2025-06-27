@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultimate Gmail Email Generator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      max-width: 850px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+      font-size: 30px;
+    }
+    input, select, button {
+      padding: 10px;
+      width: 100%;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #0069d9;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .actions button {
+      flex: 1;
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 10px;
+      resize: vertical;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📧 Ultimate Gmail Email Generator</h1>
+
+  <label>Email Gmail Asli:</label>
+  <input type="text" id="baseEmail" placeholder="contoh: namasaya@gmail.com" />
+
+  <label>Jumlah Email yang Ingin Dibuat:</label>
+  <input type="number" id="jumlah" value="20" min="1" max="1000" />
+
+  <label>Mode Generator:</label>
+  <select id="mode">
+    <option value="dot">Dot Trick</option>
+    <option value="plus">Plus Trick</option>
+    <option value="dotplus">Dot + Plus Trick</option>
+    <option value="randomplus">Dot + Random Alias</option>
+  </select>
+
+  <button onclick="generate()">🚀 Generate Email</button>
+
+  <div class="actions">
+    <button onclick="copyToClipboard()">📋 Copy</button>
+    <button onclick="downloadTxt()">⬇️ .txt</button>
+    <button onclick="downloadCSV()">⬇️ .csv</button>
+  </div>
+
+  <textarea id="output" placeholder="Hasil email muncul di sini..." readonly></textarea>
+
+  <footer>
+    &copy; 2025 - Crytoshop by andri14 |
+  </footer>
+
+  <script>
+    function insertDots(str) {
+      const results = new Set();
+      const recurse = (prefix, rest) => {
+        if (rest.length === 0) {
+          results.add(prefix);
+          return;
+        }
+        recurse(prefix + rest[0], rest.slice(1));
+        recurse(prefix + "." + rest[0], rest.slice(1));
+      };
+      recurse("", str);
+      return Array.from(results);
+    }
+
+    function generateRandomSuffix(length = 6) {
+      const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+      return [...Array(length)].map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    function generate() {
+      const base = document.getElementById('baseEmail').value.trim().toLowerCase();
+      const jumlah = parseInt(document.getElementById('jumlah').value);
+      const mode = document.getElementById('mode').value;
+      const output = document.getElementById('output');
+
+      if (!base.endsWith('@gmail.com')) {
+        alert("Gunakan email Gmail yang valid.");
+        return;
+      }
+
+      const user = base.split('@')[0].replace(/\./g, '');
+      const domain = "@gmail.com";
+      const emailSet = new Set();
+
+      if (mode === "dot") {
+        insertDots(user).forEach(u => emailSet.add(`${u}${domain}`));
+      }
+
+      if (mode === "plus") {
+        for (let i = 1; emailSet.size < jumlah; i++) {
+          emailSet.add(`${user}+alias${i}${domain}`);
+        }
+      }
+
+      if (mode === "dotplus") {
+        let dots = insertDots(user);
+        for (let i = 0; i < dots.length && emailSet.size < jumlah; i++) {
+          emailSet.add(`${dots[i]}+alias${i + 1}${domain}`);
+        }
+      }
+
+      if (mode === "randomplus") {
+        let dots = insertDots(user).sort(() => 0.5 - Math.random());
+        let index = 0;
+        while (emailSet.size < jumlah && index < dots.length * 5) {
+          const suffix = generateRandomSuffix(6);
+          const name = dots[index % dots.length];
+          emailSet.add(`${name}+${suffix}${domain}`);
+          index++;
+        }
+      }
+
+      const result = Array.from(emailSet).slice(0, jumlah);
+      output.value = result.join("\n");
+    }
+
+    function copyToClipboard() {
+      const out = document.getElementById('output');
+      out.select();
+      document.execCommand('copy');
+      alert("📋 Disalin ke clipboard!");
+    }
+
+    function downloadTxt() {
+      const blob = new Blob([document.getElementById('output').value], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'emails.txt';
+      a.click();
+    }
+
+    function downloadCSV() {
+      const text = document.getElementById('output').value.split('\n').map(e => `"${e}"`).join('\n');
+      const blob = new Blob([text], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'emails.csv';
+      a.click();
+    }
+  </script>
+</body>
+</html>
